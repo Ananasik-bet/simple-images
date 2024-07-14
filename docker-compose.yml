@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15.3-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file: "${ENV_FILE:-.env}"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pgpass}
+      POSTGRES_DB: ${POSTGRES_DB:-sloth}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-pgpass}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-sloth}?schema=${POSTGRES_SCHEMA:-public}
+    ports:
+      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    restart: unless-stopped
+    networks:
+      - simplenest
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "${PG_ADMIN_PORT:-5050}:${PG_ADMIN_PORT:-5050}"
+    expose:
+      - "${PG_ADMIN_PORT:-5050}"
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASSWORD:-admin}
+      PGADMIN_LISTEN_PORT: ${PG_ADMIN_PORT:-5050}
+    depends_on:
+      - postgres
+      
+  backend:
+    build:
+      dockerfile: Dockerfile
+      context: ./gateway
+    env_file: "${ENV_FILE:-.env}"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-pgpass}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-idp}?schema=${POSTGRES_SCHEMA:-public}
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - simplenest
+
+volumes:
+  postgres_data:
+    name: test-postgres
+
+networks:
+  simplenest:
