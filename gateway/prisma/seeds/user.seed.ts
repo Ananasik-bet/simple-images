@@ -7,6 +7,15 @@ const prisma = new PrismaClient();
 async function seedUsers() {
   const usersToCreate = 10000;
   const password = await hash('password');
+
+  const adminUser = {
+    email: 'admin@gmail.com',
+    name: 'Admin',
+    city: 'New York',
+    password: password,
+    role: Role.ADMIN,
+  };
+
   const users = Array.from({ length: usersToCreate }).map(() => ({
     email: `user${uuidv4()}@example.com`,
     name: `User ${uuidv4().substring(0, 8)}`,
@@ -19,6 +28,8 @@ async function seedUsers() {
     await prisma.user.createMany({
       data: users,
     });
+
+    await prisma.user.create({ data: adminUser });
     console.log(`Seeded ${usersToCreate} users.`);
   } catch (error) {
     console.error('Error seeding users:', error);
