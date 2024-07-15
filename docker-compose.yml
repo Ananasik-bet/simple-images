@@ -46,6 +46,19 @@ services:
     networks:
       - simplenest
 
+  frontend:
+    build:
+      dockerfile: Dockerfile
+      context: ./frontend
+    env_file: "${ENV_FILE:-frontend/.env}"
+    ports:
+      - "${REACT_APP_PORT:-4000}:${REACT_APP_PORT:-4000}"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - simplenest
+
 volumes:
   postgres_data:
     name: test-postgres
